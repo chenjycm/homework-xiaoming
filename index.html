@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>羽毛球活动收支计算</title>
+    <script type="text/javascript">       
+       function comp_day (day){    //根据日期计算星期数，星期天为0，星期一为1，星期二为2
+       		var a=new Date(day); 
+      		return a.getDay(); 
+       }   
+             //console.log("测试数据：2016-06-06为星期1，结果："+comp_day("2016-06-06"));
+       function comp_cost(day,time){   //通过星期数(1.2.3.4.5.6.0)、打球时间段，计算每个场地费用
+      	 	var timeline = time.split("~");
+     	  	var start_time = timeline[0].split(":");
+      	 	var finish_time = timeline[1].split(":");  
+     	  	var s1 = parseInt(start_time[0]);
+     	  	var f1 = parseInt(finish_time[0]);   
+     	  	//console.log("开始："+s1); console.log("结束："+f1);
+     	  	var fee = 0; var p = 0;        //fee表示单位场地每个小时的费用，p表示每个场地在不同时间费用合计 
+     	  	var days = comp_day(day);       //调用计算星期的函数，把日期转化为星期数
+     	    for(s1;s1<f1;s1++){
+       	  		if(days>0&&days<6){
+       	  		 	if(s1<12){fee = 30;}
+       	 			else if(s1<18) {fee=50;}
+       	 			else if(s1<20) {fee=80;}
+       	 		 	else {fee=60;}
+       	 	    }else{
+       	  		 	if(s1<12) {fee=40;}
+       	  			else if(s1<18) {fee=50;}
+       	  			else {fee=60;}
+       	  	 		}
+       	  	 	p+=fee;	//console.log("p="+p);
+       	  		}
+       		return p; 
+         } 	
+         //console.log(comp_day("2016-06-11"));
+         //	console.log(comp_cost(comp_day ("2016-06-11"),"13:00~15:00"));       			
+       function comp_court (people){     //通过人数，计算需要预定的场地数量
+       		var t=parseInt(people/6);     //	 console.log("T="+t);
+       		var x=people%6;  	//	console.log("X="+x); 
+       		var court = 0;
+       		if(t==0&&x<4) { court=0; } 
+      	 	 else if(t==0&&x>=4){court=1;}
+      	 	 else if(t==1) {court=2;}
+       		 else if((t==2||t==3)&&x<4) {court=t;}
+       		 else if((t==2||t==3)&&x>=4) {court=t+1;}
+      		 else if(t>3) {court=t;}
+          	return court;
+       } // console.log(comp_court(29));
+       function get_money(people){         //计算每次的收入。
+       		var a = 0;
+       		if(parseInt(people)<4){a=0;}
+       		else {a = parseInt(people)*30;}
+       		return a;
+       }    
+       function cost_money(day,time,people) {      //计算每次的总费用：每个场地的费用*场地数量。
+       		var b = comp_cost(day,time)*comp_court(people);
+        	return b;
+       }       // console.log("每个场地费："+comp_cost("2016-06-03","09:00~12:00"));  //  console.log("场地数："+comp_court(14));
+       function earn_money(day,time,people){         //计算盈余的资金。
+        	var e = get_money(people)-cost_money(day,time,people);
+        	return e;
+        }    
+      
+
+        function get_data(){
+			var catch_text = document.getElementById("list").value;  
+        	var lists = catch_text.split("\n");   	 // lists表示输入的打球信息
+            console.log("活动信息读入："+"\n"+lists);   
+            console.log("打球次数:"+lists.length+"次");
+			var each_t = new Array();   //存储每次活动的情况，
+            for(var i=0;i<lists.length;i++){       //将每行输入的数据存在对象each_time中，其每个元素有三个属性，分别是日期、时间和人数 。     		
+        	    each_t.push(lists[i].split(" "));
+        	 }
+            return each_t;
+        }
+       		
+        function deals(option){
+        	    var days = option[0];
+        	    var times =option[1];
+        	    var get_s ;                           //给需要输出的
+        		var cost_s ;
+        		var earn_s ;	
+        		if (get_money(option[2])>0) {      // if语句对收入、支出和盈余的数据添加“+”或者“-”
+        			get_s = "+"+get_money(option[2]);
+        		}else{
+        			get_s="-"+get_money(option[2]);}	        		
+        		cost_s="-"+cost_money(option[0],option[1],option[2]); 
+        		if(earn_money(option[0],option[1],option[2])>0){
+        			earn_s = "+"+earn_money(option[0],option[1],option[2]);
+        		} else {earn_s = earn_money(option[0],option[1],option[2]);}
+        	    var t = {day:days,time:times,getMoney:get_s,costMoney:cost_s,earnMoney:earn_s};  
+        	    return t;//将五个属性数据临时存入tmp对象中        		
+        }
+       function in_out(){           //数据读入和结果输出
+        	if(document.getElementById("list").value.length == 0 ){ 
+        		alert("无数据输入，请重新输入！");
+        	} else{
+        		document.getElementById('box').innerHTML = document.getElementById('box').innerHTML+"</br>"+"[Summary]"+"</br>";           //输出标题
+        		var each_time = get_data();
+        		var a = each_time.length;  console.log("测试次数："+a);
+           		var sum = new Array();        //构建对象数组，每个对象中存储每次的计算汇总数据。
+        		var total_In = 0;
+        		var total_Pay = 0;
+        		var profit = 0;
+        		for(var i=0; i<a ;i++){        //将经过计算并处理后的没行数据存入sum对象中，其每个元素包括5个属性，分别为	日期、时间、收入、支出和盈余。
+        			x = each_time[i];
+        			var tmp = deals(x);
+        			sum.push(tmp);      //将tmp对象数据push到sum数组
+        			total_In+=get_money(x[2]);      //计算收入、支出和盈余
+        			total_Pay+=cost_money(x[0],x[1],x[2]);
+        			profit+=earn_money(x[0],x[1],x[2]);
+        			document.getElementById('box').innerHTML = document.getElementById('box').innerHTML+"</br>"+sum[i].day+" "+sum[i].time+" "+sum[i].getMoney+" "+sum[i].costMoney+" "+sum[i].earnMoney;
+        		}
+        		document.getElementById('box').innerHTML = document.getElementById('box').innerHTML+ "</br>" + "</br>"+"Total Income: "+total_In+"</br>"+"Total Payment: "+total_Pay+"</br>"+"Profit: "+profit+"</br> ";
+        	}
+   		}
+   		function clear_text(){
+   			console.log("内容清除程序调用成功！");
+   			document.getElementById('list').value="";
+   			document.getElementById('box').innerHTML="";
+   		}
+    </script>
+</head>
+<body style="font-family: Microsoft YaHei;">
+	<div id="ex" style="width:300px;height:300px; display:inline-block;padding-left:20px;vertical-align: top;">
+		<p>请在右边的文本框中输入数据，输入完成后点击按钮“计算”，输入示例如下：</p>数据源：</br>
+		2016-06-02 20:00~22:00 7</br>
+		2016-06-03 09:00~12:00 14</br>
+		2016-06-04 14:00~17:00 22</br>
+		2016-06-05 19:00~22:00 3</br>
+		2016-06-06 12:00~15:00 15</br>
+		2016-06-07 15:00~17:00 12</br>
+		2016-06-08 10:00~13:00 19</br>
+		2016-06-09 16:00~18:00 16</br>
+		2016-06-10 20:00~22:00 5</br>
+		2016-06-11 13:00~15:00 11
+	</div>		
+	<div style="display: inline-block;width:500px;height:800px;">
+		<p style="margin:0;">输入</p>
+		<textarea id="list" style="width:500px;height:160px;resize:none;"></textarea></br> 
+		<input type="button" value="计算" onClick="in_out()" />
+		<input type="button" value="重置" onClick="clear_text()" />
+		<p style="margin:0;">输出</p>
+		<div id="box" style="width:500px;height:380px;overflow: auto;border: 1px solid #A9A9A9;margin-top: 5px;">
+		</div>
+	</div>
+</body>
+</html>
